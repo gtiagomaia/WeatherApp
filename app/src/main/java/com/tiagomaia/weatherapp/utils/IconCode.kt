@@ -14,7 +14,7 @@ enum class IconCode(val code:String, val resourceId:Int){
     rainDay("10d", R.drawable.thunder),
     thunderStormDay("11d", R.drawable.sunny),
     snowDay("13d", R.drawable.snowing_sunny),
-    mistDay("15d", R.drawable.fog),
+    mistDay("50d", R.drawable.fog),
     clearSkyNight("01n", R.drawable.night),
     fewCloudsNight("02n", R.drawable.cloudy_night),
     scatteredCloudsNight("03n", R.drawable.cloudy),
@@ -23,14 +23,14 @@ enum class IconCode(val code:String, val resourceId:Int){
     rainNight("10n", R.drawable.thunder),
     thunderStormNight("11n", R.drawable.night),
     snowNight("13n", R.drawable.snowing_night),
-    mistNight("15n", R.drawable.fog);
+    mistNight("50n", R.drawable.fog);
 
     companion object {
         fun getResourceByCode(code: String):Int {
             return try {
                values().find { it.code == code }?.resourceId ?: R.drawable.cloudy_sunny
             } catch(e:Exception){
-                Log.e("IconCode", "for code $code has failed retrieve an icon")
+                Log.e("IconCode", "for code $code doesn't have an icon")
                 R.drawable.cloudy_sunny
             }
         }

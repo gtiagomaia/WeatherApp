@@ -1,6 +1,10 @@
 package com.tiagomaia.weatherapp
 
+
+
+import android.content.res.AssetManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -15,10 +19,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.tiagomaia.weatherapp.extensions.readAssetsFile
+import com.tiagomaia.weatherapp.model.usecase.City
+import com.tiagomaia.weatherapp.ui.DetailsWeatherView
 import com.tiagomaia.weatherapp.ui.MainView
 import com.tiagomaia.weatherapp.ui.WeatherViewModel
 import com.tiagomaia.weatherapp.ui.theme.WeatherAppTheme
@@ -50,29 +66,51 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel:WeatherViewModel by viewModels()
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             WeatherAppTheme {
+                val navController = rememberNavController()
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    NavHostView()
+                    //Greeting("Android")
 
-                    MainView()
+                    //MainView()
 
-                    //ListOfImages(resources = resourcesImageName())
                 }
             }
         }
     }
-
-
-
-
 }
+
+
+@Composable
+fun NavHostView(navController: NavHostController = rememberNavController(),
+                startDestination:String = "main"){
+    NavHost(navController = navController, startDestination = "main") {
+        composable("main") { MainView(navController) }
+        composable("details/{city}/lat={lat}/lon={lon}", arguments = listOf(
+            navArgument("city") { type = NavType.StringType; defaultValue = "N/A" },
+            navArgument("lat") { type = NavType.FloatType; defaultValue = 0.0f },
+            navArgument("lon") {  type = NavType.FloatType; defaultValue = 0.0f },
+            )
+        ) {
+            DetailsWeatherView(
+                navController,
+                it.arguments?.getString("city"),
+                it.arguments?.getFloat("lat"),
+                it.arguments?.getFloat("lon")
+            )
+        }
+    }
+}
+
 
 fun resourcesImageName() : List<Int> {
     return listOf(R.drawable.cloudy_night,
