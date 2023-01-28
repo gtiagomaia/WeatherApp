@@ -32,7 +32,7 @@ class WeatherViewModel @Inject constructor(
 
                 when(it){
                     is NetworkResult.Loading -> {
-                        Log.d("weather_request_loading", "$.isLoading: {it.isLoading}")
+                        Log.d("weather_request_loading", "is loading: ${it.isLoading}")
                     }
 
                     is NetworkResult.Error -> {

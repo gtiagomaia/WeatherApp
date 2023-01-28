@@ -122,7 +122,7 @@ class LocationManager @Inject constructor(
             sendCoordinate(Coordinate(it.latitude, it.longitude))
         }.addOnFailureListener { Log.e(TAG, "Last location failure: $it") }
 
-        sendCoordinate(Coordinate(40.203314, -8.410257))
+        //sendCoordinate(Coordinate(40.203314, -8.410257))
         awaitClose {
             stopLocationUpdates(callBack)
         }

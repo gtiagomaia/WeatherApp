@@ -3,13 +3,12 @@ package com.tiagomaia.weatherapp.ui
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -19,15 +18,52 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.tiagomaia.weatherapp.R
 import com.tiagomaia.weatherapp.model.usecase.CurrentWeather
 import com.tiagomaia.weatherapp.utils.IconCode
-import kotlin.math.ln
+
+
+@Composable
+fun DetailsWeatherView(navController: NavController, city: String?, lat:Float?, lng:Float?) {
+    val scaffoldState = rememberScaffoldState()
+    val scope = rememberCoroutineScope()
+
+    Scaffold(
+        scaffoldState = scaffoldState,
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "$city") },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.navigateUp()
+                        }
+                    ){
+                        Icon(
+                            painter = painterResource(id = R.drawable.round_arrow_forward),
+                            contentDescription = "Go back",
+                            modifier = Modifier.rotate(180f),
+                            tint = Color.White
+                        )
+                    }
+                }
+            )
+        },
+        backgroundColor = Color.Transparent,
+        contentColor = Color.White,
+        content = {
+            DetailsWeatherContentView(Modifier.padding(it), city, lat, lng)
+        }
+    )
+
+}
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun DetailsWeatherView(navController: NavController, content: String?, lat:Float?, lng:Float?, viewModel: WeatherViewModel = hiltViewModel()) {
-    //require(content != null)
-    // State
+fun DetailsWeatherContentView(modifier:Modifier, content: String?, lat:Float?, lng:Float?, viewModel: WeatherViewModel = hiltViewModel()) {
+
+
+
     val weather = viewModel.weather.observeAsState()
     var visible by remember { mutableStateOf(true) }
     // API call
@@ -45,13 +81,11 @@ fun DetailsWeatherView(navController: NavController, content: String?, lat:Float
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-
-            Text(text = content ?: "", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
                     /* going back to the main screen */
-                    navController.navigateUp()
+
                 }
             ) {
                 Text(text = "Go back")

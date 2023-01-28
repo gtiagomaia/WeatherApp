@@ -16,10 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -38,8 +38,10 @@ import com.tiagomaia.weatherapp.R
 import com.tiagomaia.weatherapp.extensions.readAssetsFile
 import com.tiagomaia.weatherapp.model.usecase.City
 import com.tiagomaia.weatherapp.model.usecase.Coordinate
+import com.tiagomaia.weatherapp.model.usecase.Rain
 import com.tiagomaia.weatherapp.utils.IconCode
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 @Composable
@@ -71,9 +73,8 @@ fun ShowCurrentWeather(viewModel:WeatherViewModel = hiltViewModel()) {
     val coroutineScope = rememberCoroutineScope()
     val locationPermissionState = rememberMultiplePermissionsState( listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)){
         if(it.values.contains(true)){ // at least one permission was granted
-            coroutineScope.launch {
-                viewModel.requestForCurrentLocation()
-            }
+
+
         }
     }
     val animationState = remember { MutableTransitionState(true) }
@@ -83,41 +84,132 @@ fun ShowCurrentWeather(viewModel:WeatherViewModel = hiltViewModel()) {
         locationPermissionState.launchMultiplePermissionRequest()
     }
     // API call
-    LaunchedEffect(Unit){
-        //viewModel.getCurrentWeatherForLocation(40.2, -8.41)
-        Log.d("launch", "launch permission - isGranted:${locationPermissionState.allPermissionsGranted}")
-//        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){
-//            launch {
-//                if(locationPermissionState.permissions.map { it.status.isGranted }.contains(true)) {
-//                    coroutineScope.launch {
-//                        viewModel.requestForCurrentLocation()
-//                    }
-//                }
-//
-//            }
-//        }
-
+    LaunchedEffect(weather.value == null){
+        if(locationPermissionState.permissions.map { it.status.isGranted }.contains(true)) {
+            coroutineScope.launch {
+                Log.i("AG", "corroutine launch")
+                viewModel.requestForCurrentLocation()
+            }
+        }
     }
-
 
     val current = weather.value ?: return
 
     AnimatedVisibility(visibleState = animationState, enter = slideInVertically()) {
-        test(
+        Pager(
             content1 = { Page1CurrentWeather(current.name, current.weather.description, current.weather.icon, current.main.temp) },
-            content2 = { /*TODO*/ },
-            content3 = { /*TODO*/ }
+            content2 = { Page2CurrentTemperature(current.main.feelsLike, current.main.tempMin, current.main.tempMax) },
+            content3 = { Page3CurrentHumidity(current.main.humidity, current.visibility, current.rain) }
         )
     }
 
+}
 
+@Composable
+fun Page3CurrentHumidity(humidity: Int, visibility: Int, rain: Rain) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text("Humidity", color= Color.White, fontSize = 14.sp, modifier = Modifier)
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp) ){
+            Image(
+                painter = painterResource(R.drawable.temperature),
+                contentDescription = "temp",
+                modifier = Modifier
+                    .size(40.dp)
+                    .align(Alignment.CenterStart)
+                    .alpha(0.9f)
+                    .fillMaxWidth()
+
+            )
+            Text(
+                text = "$humidity %", color = Color.White,
+                style = TextStyle(
+                    fontSize = 40.sp,
+                    shadow = Shadow(
+                        color = Color.Black,
+                        blurRadius = 6f
+                    )
+                ),
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+        }
+        Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$visibility KM", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("Visibility", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+            }
+            Spacer(modifier = Modifier.width(20.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$rain mm", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("Precipitation", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun Page2CurrentTemperature(feelsLike: Double, tempMin: Double, tempMax: Double) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text("Feels like", color= Color.White, fontSize = 14.sp, modifier = Modifier)
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp) ){
+            Image(
+                painter = painterResource(R.drawable.temperature),
+                contentDescription = "temp",
+                modifier = Modifier
+                    .size(40.dp)
+                    .align(Alignment.CenterStart)
+                    .alpha(0.9f)
+                    .fillMaxWidth()
+
+            )
+            Text(
+                text = "${feelsLike.roundToInt()} º", color = Color.White,
+                style = TextStyle(
+                    fontSize = 40.sp,
+                    shadow = Shadow(
+                        color = Color.Black,
+                        blurRadius = 6f
+                    )
+                ),
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+        }
+        Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("${tempMin.roundToInt()}º", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("min", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+            }
+            Spacer(modifier = Modifier.width(20.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("${tempMax.roundToInt()}º", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("max", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+            }
+        }
+    }
 }
 
 @Composable
 fun Page1CurrentWeather(localName:String, description:String, icon:String, temperature:Int) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth().padding(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
     ) {
         Text(localName, color= Color.White, fontSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
         //Box(modifier = Modifier.padding(30.dp)) {
@@ -235,7 +327,7 @@ fun CityRow(city: City, onClick:(city:City)->Unit) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun test(
+fun Pager(
     content1: @Composable () -> Unit,
     content2: @Composable () -> Unit,
     content3: @Composable () -> Unit
