@@ -1,14 +1,11 @@
 package com.tiagomaia.weatherapp.ui
 
-import android.net.Network
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tiagomaia.weatherapp.R
-import com.tiagomaia.weatherapp.model.usecase.City
+import com.tiagomaia.weatherapp.location.LocationManager
 import com.tiagomaia.weatherapp.model.usecase.Coordinate
 import com.tiagomaia.weatherapp.model.usecase.CurrentWeather
 import com.tiagomaia.weatherapp.network.NetworkResult
@@ -21,22 +18,17 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val repository: OWMRepo
+    private val repository: OWMRepo,
+    private val locationManager: LocationManager,
 ) : ViewModel() {
     private var _weather = MutableLiveData<CurrentWeather>()
     val weather: LiveData<CurrentWeather> = _weather
 
-    private val _itemsState = mutableStateListOf<NetworkResult<CurrentWeather>>()
-    val itemsState: List<NetworkResult<CurrentWeather>> = _itemsState
 
-
-
+    // request weather to API
     fun getCurrentWeatherForLocation(lat:Double, lon:Double){
         viewModelScope.launch(Dispatchers.IO) {
             repository.getCurrentWeatherFor(Coordinate(lat, lon)).collect {
-
-
-                Log.d("weather",it.toString())
 
                 when(it){
                     is NetworkResult.Loading -> {
@@ -55,22 +47,12 @@ class WeatherViewModel @Inject constructor(
             }
         }
     }
-    fun getCurrentWeatherForCity(coord:Coordinate) = getCurrentWeatherForCity(coord.lat, coord.lon)
-    fun getCurrentWeatherForCity(lat:Double, lon:Double){
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.getCurrentWeatherFor(Coordinate(lat, lon)).collect {
-                Log.d("Items", it.toString())
-                _itemsState.add(it)
-                Log.d("Items", "itemState.size=${itemsState.size}")
-            }
-        }
-    }
 
 
-    fun requestForCities(cities:List<City>){
-
-        cities.forEach {
-            getCurrentWeatherForCity(it.coord)
+    // request location to Location Manager
+    suspend fun requestForCurrentLocation(){
+        locationManager.locationFlow().collect{
+           getCurrentWeatherForLocation(it.lat, it.lon)
         }
     }
 
@@ -78,5 +60,8 @@ class WeatherViewModel @Inject constructor(
         super.onCleared()
         viewModelScope.cancel()
     }
+
+
+
 }
 

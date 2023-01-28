@@ -2,7 +2,6 @@ package com.tiagomaia.weatherapp.di
 
 import com.tiagomaia.weatherapp.network.ApiInterface
 import com.tiagomaia.weatherapp.network.OWMRepo
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

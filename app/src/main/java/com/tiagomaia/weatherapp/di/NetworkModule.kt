@@ -1,6 +1,7 @@
-package com.tiagomaia.weatherapp.network
+package com.tiagomaia.weatherapp.di
 
-import dagger.Binds
+import com.tiagomaia.weatherapp.network.ApiInterface
+import com.tiagomaia.weatherapp.network.OpenWeatherMapApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
