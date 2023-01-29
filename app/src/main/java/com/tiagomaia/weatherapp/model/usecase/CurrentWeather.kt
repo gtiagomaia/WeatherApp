@@ -8,6 +8,7 @@ data class CurrentWeather(
     val visibility: Int, // in KM
     val wind: Wind,
     val rain: Rain,
+    val clouds: Clouds,
     val snow: Snow,
     val dt:Int, // unix timestamp
     val sys: SysInternalParams,

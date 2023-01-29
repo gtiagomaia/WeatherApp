@@ -5,18 +5,16 @@ import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -38,7 +36,6 @@ import com.tiagomaia.weatherapp.R
 import com.tiagomaia.weatherapp.extensions.readAssetsFile
 import com.tiagomaia.weatherapp.model.usecase.City
 import com.tiagomaia.weatherapp.model.usecase.Coordinate
-import com.tiagomaia.weatherapp.model.usecase.Rain
 import com.tiagomaia.weatherapp.utils.IconCode
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -55,7 +52,7 @@ fun MainView(navController: NavController) {
         verticalArrangement = Arrangement.SpaceAround
     ){
 
-        ShowCurrentWeather()
+        ShowCurrentWeather(navController)
 
         ListOfCitiesView(navController)
 
@@ -66,17 +63,12 @@ fun MainView(navController: NavController) {
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun ShowCurrentWeather(viewModel:WeatherViewModel = hiltViewModel()) {
+fun ShowCurrentWeather(navController: NavController, viewModel:WeatherViewModel = hiltViewModel()) {
     // State
     // location permission state
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val coroutineScope = rememberCoroutineScope()
-    val locationPermissionState = rememberMultiplePermissionsState( listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)){
-        if(it.values.contains(true)){ // at least one permission was granted
-
-
-        }
-    }
+    val locationPermissionState = rememberMultiplePermissionsState( listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION))
     val animationState = remember { MutableTransitionState(true) }
     val weather = viewModel.weather.observeAsState()
     val (location, setLocation) = remember {  mutableStateOf<Coordinate?>( null) }
@@ -97,16 +89,38 @@ fun ShowCurrentWeather(viewModel:WeatherViewModel = hiltViewModel()) {
 
     AnimatedVisibility(visibleState = animationState, enter = slideInVertically()) {
         Pager(
-            content1 = { Page1CurrentWeather(current.name, current.weather.description, current.weather.icon, current.main.temp) },
-            content2 = { Page2CurrentTemperature(current.main.feelsLike, current.main.tempMin, current.main.tempMax) },
-            content3 = { Page3CurrentHumidity(current.main.humidity, current.visibility, current.rain) }
+            onClick = {
+                navController.navigate("details/${current.name}/lat=${current.coord.lat}/lon=${current.coord.lon}")
+            },
+            content1 = {
+                Page1CurrentWeather(
+                    current.name,
+                    current.weather.description,
+                    current.weather.icon,
+                    current.main.temp
+                )
+            },
+            content2 = {
+                Page2CurrentTemperature(
+                    current.main.feelsLike,
+                    current.main.tempMin,
+                    current.main.tempMax
+                )
+            },
+            content3 = {
+                Page3CurrentHumidity(
+                    current.main.humidity,
+                    current.visibility,
+                    current.wind.speed.roundToInt()
+                )
+            }
         )
     }
 
 }
 
 @Composable
-fun Page3CurrentHumidity(humidity: Int, visibility: Int, rain: Rain) {
+fun Page3CurrentHumidity(humidity: Int, visibility: Int, wind: Int) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -118,7 +132,7 @@ fun Page3CurrentHumidity(humidity: Int, visibility: Int, rain: Rain) {
             .fillMaxWidth()
             .padding(20.dp) ){
             Image(
-                painter = painterResource(R.drawable.temperature),
+                painter = painterResource(R.drawable.humidity),
                 contentDescription = "temp",
                 modifier = Modifier
                     .size(40.dp)
@@ -147,8 +161,8 @@ fun Page3CurrentHumidity(humidity: Int, visibility: Int, rain: Rain) {
             }
             Spacer(modifier = Modifier.width(20.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("$rain mm", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
-                Text("Precipitation", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("$wind KM/h", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("Wind", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
             }
         }
     }
@@ -192,12 +206,12 @@ fun Page2CurrentTemperature(feelsLike: Double, tempMin: Double, tempMax: Double)
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("${tempMin.roundToInt()}º", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
-                Text("min", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("Min", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
             }
             Spacer(modifier = Modifier.width(20.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("${tempMax.roundToInt()}º", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
-                Text("max", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
+                Text("Max", color= Color.White, fontSize = 13.sp, modifier = Modifier.padding(bottom = 1.dp))
             }
         }
     }
@@ -328,6 +342,7 @@ fun CityRow(city: City, onClick:(city:City)->Unit) {
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun Pager(
+    onClick:()->Unit,
     content1: @Composable () -> Unit,
     content2: @Composable () -> Unit,
     content3: @Composable () -> Unit
@@ -336,6 +351,7 @@ fun Pager(
         .fillMaxWidth()
         .height(260.dp)
         .padding(20.dp)
+        .clickable {  onClick() }
         .background(Color.Gray.copy(0.8f), shape = RoundedCornerShape(28.dp)))  {
         val pagerState = rememberPagerState()
 

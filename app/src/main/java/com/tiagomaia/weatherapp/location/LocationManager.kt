@@ -3,6 +3,7 @@ package com.tiagomaia.weatherapp.location
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -78,12 +79,8 @@ class LocationManager @Inject constructor(
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
                 val location = locationResult.lastLocation ?: locationResult.locations.lastOrNull() ?: return
-                val coordinate = Coordinate(
-                    lat = location.latitude,
-                    lon = location.longitude
-                )
                 try {
-                    this@callbackFlow.trySend(coordinate).isSuccess
+                    this@callbackFlow.trySend(location).isSuccess
                     stopLocationUpdates(this)
                 } catch (e: Exception) {
                     Log.e(TAG, "${e.message}")
@@ -91,7 +88,7 @@ class LocationManager @Inject constructor(
             }
         }
 
-        val sendCoordinate : (Coordinate) -> Unit = {
+        val sendCoordinate : (Location) -> Unit = {
             try {
                 this@callbackFlow.trySend(it).isSuccess
                 stopLocationUpdates(callBack)
@@ -113,13 +110,13 @@ class LocationManager @Inject constructor(
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, tokenCancellation)
             .addOnSuccessListener {
                 it ?: return@addOnSuccessListener
-                sendCoordinate(Coordinate(it.latitude, it.longitude))
+                sendCoordinate(it)
             }
             .addOnFailureListener { Log.e(TAG, "Current location failure: $it") }
 
         fusedLocationClient.lastLocation.addOnSuccessListener {
             it ?: return@addOnSuccessListener
-            sendCoordinate(Coordinate(it.latitude, it.longitude))
+            sendCoordinate(it)
         }.addOnFailureListener { Log.e(TAG, "Last location failure: $it") }
 
         //sendCoordinate(Coordinate(40.203314, -8.410257))

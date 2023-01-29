@@ -1,5 +1,6 @@
 package com.tiagomaia.weatherapp.ui
 
+import android.location.Location
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -21,11 +22,18 @@ class WeatherViewModel @Inject constructor(
     private val repository: OWMRepo,
     private val locationManager: LocationManager,
 ) : ViewModel() {
+    private var _lastKnowLocation = MutableLiveData<Location>()
     private var _weather = MutableLiveData<CurrentWeather>()
     val weather: LiveData<CurrentWeather> = _weather
 
+    init {
+        _weather.value = null
+        _lastKnowLocation.value = null
+    }
 
-    // request weather to API
+    /*
+     * request weather to API
+     */
     fun getCurrentWeatherForLocation(lat:Double, lon:Double){
         viewModelScope.launch(Dispatchers.IO) {
             repository.getCurrentWeatherFor(Coordinate(lat, lon)).collect {
@@ -48,11 +56,20 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
-
-    // request location to Location Manager
+    /*
+     * request location to Location Manager
+     */
     suspend fun requestForCurrentLocation(){
-        locationManager.locationFlow().collect{
-           getCurrentWeatherForLocation(it.lat, it.lon)
+        locationManager.locationFlow().collect{ location ->
+            // avoid request locations multiple times, at least 10 min each
+           _lastKnowLocation.value?.let { lastLoc ->
+               val diff = location.time - lastLoc.time // time unix epoch in millis
+               val diffInMinutes = diff / 1000 / 60
+               if(diffInMinutes < 0) return@let // invalid time
+               if(diffInMinutes < 10) return@collect
+           }
+            _lastKnowLocation.value = location
+           getCurrentWeatherForLocation(location.latitude, location.longitude)
         }
     }
 

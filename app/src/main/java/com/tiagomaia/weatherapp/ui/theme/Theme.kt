@@ -60,7 +60,7 @@ fun WeatherAppTheme(
     if (!view.isInEditMode) {
         SideEffect {
             (view.context as Activity).window.apply {
-                statusBarColor = GrayGradientTop.toArgb()
+                statusBarColor = Color(0xFF607D8B).toArgb()
                 WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
             }
         }

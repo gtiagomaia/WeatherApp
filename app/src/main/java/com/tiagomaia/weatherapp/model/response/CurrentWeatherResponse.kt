@@ -50,6 +50,7 @@ data class CurrentWeatherResponse(
         visibility = (this.visibility ?: 1000) / 1000, // meter to km
         wind = wind?.toModel() ?: Wind(0.0, 0, 0.0),
         rain = rain?.toRainModel() ?: Rain(0.0, 0.0),
+        clouds = clouds?.toModel() ?: Clouds(0),
         snow = snow?.toSnowModel() ?: Snow(0.0, 0.0),
         dt = dt ?: 0,
         sys = sys?.toModel() ?: SysInternalParams(0,0,"", "", 0, 0),
@@ -63,29 +64,4 @@ data class CurrentWeatherResponse(
     }
 
 
-}
-
-
-fun CoordinateResponse.toString():String {
-    return "CoordinateResponse(lat=$lat, lon=$lon)"
-}
-private fun MainWeatherResponse.toString():String {
-    return "MainWeatherResponse(id=$id, main=$main, description=$description, icon=$icon)"
-}
-
-private fun MainResponse.toString():String {
-    return "MainResponse(temp=$temp, pressure=$pressure, humidity=$humidity, feelsLike=$feelsLike, tempMin=$tempMin, tempMax=$tempMax, seaLevel=$seaLevel, groundLevel=$groundLevel)"
-}
-private fun WindResponse.toString():String {
-    return "WindResponse(speed=$speed, deg=$deg, gust=$gust)"
-}
-private fun CloudsResponse.toString():String {
-    return "CloudsResponse(all=$all)"
-}
-private fun RainOrSnowResponse.toString():String{
-    return "RainOrSnowResponse(last1h=$last1h, last3h=$last3h)"
-}
-
-private fun SysInternalParamsResponse.toString():String {
-    return "SysInternalParamsResponse(type=$type, id=$id, message=$message, country=$country, sunrise=$sunrise, sunset=$sunset)"
 }

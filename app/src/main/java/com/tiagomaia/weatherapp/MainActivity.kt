@@ -42,8 +42,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Box(modifier = Modifier.background(
                         Brush.linearGradient(
-                                0.0f to Color(0xFF3C3D3D),
-                                500.0f to Color(0xFF212427),
+                                0.0f to Color(0xFF607D8B),
+                                500.0f to Color(0xFF616161),
                                 start = Offset.Zero,
                                 end = Offset.Infinite
                         ))) {
